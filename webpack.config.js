@@ -5,6 +5,9 @@ const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 const sass_rule = {
   test: /\.(sass|scss)$/,
@@ -51,6 +54,15 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.(js)$/,
+        exclude: /node_modules/,
+        enforce: 'pre',
+        loader: 'eslint-loader',
+        options: {
+          emitWarning: true,
+        }
+      },
+      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: [
@@ -63,8 +75,14 @@ module.exports = {
       sass_rule
     ]
   },
+  optimization: {
+    minimizer: [new TerserPlugin(), new OptimizeCSSAssetsPlugin({})]
+  },
   plugins: [
     new CleanWebpackPlugin(),
+    new CopyWebpackPlugin([
+      { from: path.resolve(__dirname, 'src/public'), to: 'assets' }
+    ]),
     new MiniCssExtractPlugin({
       filename: devMode ? 'assets/css/[name].css' : 'assets/css/[hash].css',
       chunkFilename: '[id].css'
