@@ -1,19 +1,20 @@
 const path = require('path');
+const devMode = (process.env.NODE_ENV === 'development');
+
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const css_extract_plugin = new MiniCssExtractPlugin({
-  filename: 'css/[name].css',
-  chunkFilename: '[id].css'
-});
+
 const sass_rule = {
   test: /\.(sass|scss)$/,
   use: [
     {
       loader: MiniCssExtractPlugin.loader,
       options: {
-        hmr: true,
+        hmr: devMode,
         modules: true,
-        sourceMap: true
+        sourceMap: devMode
       }
     },
     'css-loader',
@@ -26,7 +27,7 @@ const image_rule = {
     {
       loader: 'file-loader',
       options: {
-        outputPath: 'img',
+        outputPath: 'assets/img',
         publicPath: '../assets/img'
       },
     },
@@ -38,11 +39,15 @@ module.exports = {
     hello_world: './src/pages/hello_world/script.js'
   },
   output: {
-    filename: 'scripts/[name].js',
-    path: path.resolve(__dirname, 'dist/assets'),
-    publicPath: '../assets'
+    filename: 'assets/scripts/[name].js',
+    path: path.resolve(__dirname, 'dist')
   },
-  mode: 'development',
+  mode: process.env.NODE_ENV,
+  devServer: {
+    contentBase: './dist',
+    hot: true,
+    open: true
+  },
   module: {
     rules: [
       {
@@ -59,12 +64,17 @@ module.exports = {
     ]
   },
   plugins: [
-    css_extract_plugin,
+    new CleanWebpackPlugin(),
+    new MiniCssExtractPlugin({
+      filename: devMode ? 'assets/css/[name].css' : 'assets/css/[hash].css',
+      chunkFilename: '[id].css'
+    }),
     new HtmlWebpackPlugin({
       title: 'Hello World',
       chunks: ['hello_world'],
       template: 'src/pages/hello_world/template.html',
-      filename: '../hello_world/index.html'
-    })
+      filename: 'hello_world/index.html'
+    }),
+    new webpack.HotModuleReplacementPlugin()
   ],
 };
